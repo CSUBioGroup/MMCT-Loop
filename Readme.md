@@ -4,7 +4,7 @@
 ### Install
 If you are familar with conda, LoopCaller could be installed very easily with following after clone this project.
 ```
-git clone https://github.com/***/LoopCaller
+git clone https://github.com/CSUBioGroup/LoopCaller
 ```
 
 Before you install a new environment, please make sure your `~/.condarc` file contains the following channels or their mirror

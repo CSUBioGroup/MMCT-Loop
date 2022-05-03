@@ -1,7 +1,7 @@
-###LoopCaller
+## LoopCaller
 
 
-####Install
+### Install
 If you are familar with conda, LoopCaller could be installed very easily with following after clone this project.
 ```
 git clone https://github.com/***/LoopCaller
@@ -23,7 +23,7 @@ cd LoopCaller/
 conda env create -n LoopCaller -f LoopCaller_env.yaml
 ```
 ---
-###Usage
+### Usage
 
 #### LoopCaller pipeline
 

@@ -1,6 +1,6 @@
 #LoopCaller
 
----
+
 ##Install
 If you are familar with conda, LoopCaller could be installed very easily with following after clone this project.
 ```

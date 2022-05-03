@@ -1,22 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[22]:
-
-
 import numpy as np
 import pandas as pd
 import sys
 import csv
 
-# In[ ]:
-
-
 id = sys.argv[1]
-
-
-# In[21]:
-
 
 data = open('results_%s.loop'%(id),'r')
 heads = data.readline().strip().split('\t')

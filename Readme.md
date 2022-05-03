@@ -1,7 +1,7 @@
-#LoopCaller
+###LoopCaller
 
 
-##Install
+####Install
 If you are familar with conda, LoopCaller could be installed very easily with following after clone this project.
 ```
 git clone https://github.com/***/LoopCaller
@@ -23,9 +23,9 @@ cd LoopCaller/
 conda env create -n LoopCaller -f LoopCaller_env.yaml
 ```
 ---
-##Usage
+###Usage
 
-### LoopCaller pipeline
+#### LoopCaller pipeline
 
 All the running steps of LoopCaller are written in `run_LoopCaller.sh`.
 The following parameters are required:
@@ -51,7 +51,7 @@ The following parameters are required:
                 Default is '(-10000 0 10000 100000)'. (Negative distance indicate the required length of overlap) 
 ```
 
-### Evaluation of candidate loops
+#### Evaluation of candidate loops
 Given valid pairs and candidate loops file in '.bedpe' format, modify `run_test.sh` and run the following script to calculate ES,FDR,P-value for each loop.
 ```
 bash run_test.sh ${valid_pairs} ${loops}

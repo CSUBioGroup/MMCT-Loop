@@ -54,7 +54,7 @@ The following parameters are required:
 #### Evaluation of candidate loops
 Given valid pairs and candidate loops file in '.bedpe' format, modify `run_test.sh` and run the following script to calculate ES,FDR,P-value for each loop.
 ```
-bash run_test.sh ${valid_pairs} ${loops}
+bash run_test.sh ${filename_valid_pairs} ${filename_loops}
 ```
 ---
 ### Input and Output

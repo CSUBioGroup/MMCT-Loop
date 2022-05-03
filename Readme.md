@@ -17,7 +17,7 @@ channels:
   - bioconda
   - defaults
 ```
-Then, you can cd in LoopCaller, import `LoopCaller_env.yaml` and create a new environment.
+Then, you can cd in LoopCaller, import `LoopCaller_env.yaml` to create a new environment.
 ```
 cd LoopCaller/
 conda env create -n LoopCaller -f LoopCaller_env.yaml

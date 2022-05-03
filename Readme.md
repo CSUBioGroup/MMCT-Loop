@@ -57,7 +57,7 @@ Given valid pairs and candidate loops file in '.bedpe' format, modify `run_test.
 bash run_test.sh ${valid_pairs} ${loops}
 ```
 ---
-##Input and Output
+### Input and Output
 Both input valid pairs (PETs) and output loops are of '.bedpe' format, which contains at least six of the following columns:
 ```
 chr1    start1  end1    chr2    start2  end2

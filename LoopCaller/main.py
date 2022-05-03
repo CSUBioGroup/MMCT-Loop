@@ -272,7 +272,7 @@ def pipe(fs,
     # 5.estimate the significance
     e = callpvalue(dataI, minPts, 0, cpu, fout)
     if tmp == False:
-        print("tmp is False")
+        print("No tmp directionary.")
     if e and (tmp == False):
         shutil.rmtree(fout)
         return

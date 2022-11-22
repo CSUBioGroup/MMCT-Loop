@@ -65,9 +65,9 @@ This function support users to calculate loops ES, FDR, P-value for each candida
 
 Configure follow parameters and just run `bash run_estimate.sh`.
 ```
-in_valid_bedpe          Processed valid pairs in '.bedpe' format.
+-in_valid_bedpe          Processed valid pairs in '.bedpe' format.
 
-candidate_loops_bedpe   Candidate loops file(in 'bedpe' format) that need to be estimated.
+-candidate_loops_bedpe   Candidate loops file(in 'bedpe' format) that need to be estimated.
 ```
 
 ---

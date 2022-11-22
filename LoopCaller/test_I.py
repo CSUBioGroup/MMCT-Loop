@@ -1,12 +1,10 @@
-import sys, os
-from time import time
-from utils import getLogger, getHelp
+import os
+import time
+from utils import getLogger, getEstimatingArg
 from ioput import parseBedpeFiles, txt2jd, parseJdFile
 from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
-from HNSW3 import HNSW3 as HNSW
-from estimate import estimateInterAndSelfCutFrag
 from plot import plotInterSelfCutFrag
 from model_test import getIntSig, markIntSig
 import shutil
@@ -25,94 +23,14 @@ def checkOverlap(peak_value, lx, ly):
     return False
 
 
-def singleLoadLoop(f, M, ef, k, le, r, minPts, fp, cut=0):
-    dataI, readI, dataS, readS, dis, dss = [], [], [], [], [], []
-    key, mat = parseJdFile(f, cut=0)
-    if cut > 0:
-        d = mat[:, 2] - mat[:, 1]
-        p = np.where(d >= cut)[0]
-        mat = mat[p, :]
-        dss.extend(list(d[d < cut]))
-    if len(mat) == 0:
-        return key, f, dataI, dataS, list(dis), list(dss)
 
-    db = HNSW(mat, M, ef, k, le, r, minPts)
-    labels = pd.Series(db.labels)
+def getCandidateLoop(fs, loop_filename=""):
 
-    mat = np.array(mat)
-    mat = pd.DataFrame(mat[:, 1:].astype("float"),
-                       index=mat[:, 0],
-                       columns=["X", "Y"])
-    nlabels = set(labels.values)
-
-    # collect cluster
-    flag_peak = False
-    if len(fp) != 0:
-        flag_peak = True
-        peak_context = open(fp)
-        peaks = {}
-        for line in peak_context:
-            line = line.split("\n")[0].split("\t")
-            peak = line[0]
-            start = int(line[1])
-            end = int(line[2])
-            peaks.setdefault(peak, []).append([start, end])
-
-    t = time()
-    c0, c1, c2 = 0, 0, 0
-    for label in nlabels:
-        los = list(labels[labels == label].index)
-        sub = mat.loc[los, :]
-        if int(np.min(sub["X"])) == int(np.max(sub["X"])) \
-                or int(np.min(sub["Y"])) == int(np.max(sub["Y"])):
-            continue
-        r = [
-            key[0],
-            int(np.min(sub["X"])),
-            int(np.max(sub["X"])),
-            key[1],
-            int(np.min(sub["Y"])),
-            int(np.max(sub["Y"])),
-        ]
-
-        if flag_peak:
-            try:
-                flag1 = checkOverlap(peaks[r[0]], r[1], r[2])
-                flag2 = checkOverlap(peaks[r[3]], r[4], r[5])
-                if flag1 is True and flag2 is True:
-                    c2 += 1
-                elif flag1 is False and flag2 is False:
-                    c0 += 1
-                    continue
-                else:
-                    c1 += 1
-                    continue
-            except:
-                print("chrom no peak data!", key[0])
-                # logger.warning("chrom no peak data!", key[0])
-
-        if r[2] < r[4]:
-            dataI.append(r)
-            readI.extend(los)
-        else:
-            dataS.append(r)
-            readS.extend(los)
-
-    if len(dataI) > 0:
-        dis = mat.loc[readI, "Y"] - mat.loc[readI, "X"]
-    if len(dataS) > 0:
-        dss.extend(list(mat.loc[readS, "Y"] - mat.loc[readS, "X"]))
-    return key, f, dataI, dataS, list(dis), list(dss)
-
-
-def getCandidateLoop(fs, M, ef, k, le, r, minPts, fp, cut=0, cpu=1, loop_filename=""):
-    # ds = Parallel(n_jobs=cpu)(delayed(singleLoadLoop)(f, M, ef, k, le, r, minPts, fp, cut) for f in fs)
     dataI, dataS, dis, dss = {}, {}, [], []
     dis_t = {}
     dss_t = {}
 
     for f in fs:
-        print(f)
         chr = f.split('.')[0].split('-')[1]
         key = tuple([chr, chr])
         dataI[key] = {"f" : "", "records":[]}
@@ -127,7 +45,7 @@ def getCandidateLoop(fs, M, ef, k, le, r, minPts, fp, cut=0, cpu=1, loop_filenam
                 break
             line = line.split('\n')[0].split('\t')
             if len(line) < 6:
-                print('Loop file format error ', line)
+                log.error("Loop file format error.")
                 return
             r = [
                 line[0],
@@ -138,7 +56,7 @@ def getCandidateLoop(fs, M, ef, k, le, r, minPts, fp, cut=0, cpu=1, loop_filenam
                 int(line[5]),
             ]
             if r[0] != r[3]:
-                print('Error: not a inter-ligation loop ', line)
+                log.error("Error: not a inter-ligation loop")
                 return
             key = tuple([r[0], r[3]])
             if r[2] < r[4]:
@@ -212,7 +130,7 @@ def callpvalue(dataI, minPts, cut, cpu, fout):
     try:
         # ds.sort_values(by="poisson_p-value")
         ds = markIntSig(ds)
-        ds.to_csv(fout + "_I.loop", sep="\t", index_label="loopId")
+        ds.to_csv(fout + "_intra_ligation.loop", sep="\t", index_label="loopId")
     except:
         log.warning(
             "Something wrong happend to significance estimation, only output called loops"
@@ -249,8 +167,8 @@ def estimateInterAndSelfCutFrag_2(di, ds, log=1):
     cut = min([cut1, cut2])
     rcut = int(2 ** cut)
     # fragment size
-    if len(ds) > 0:
-        frags = np.median(ds)
+    if len(di) > 0:
+        frags = np.median(di)
     else:
         frags = 0
     rfrags = int(2 ** frags)
@@ -258,81 +176,63 @@ def estimateInterAndSelfCutFrag_2(di, ds, log=1):
 
 def pipe(fs,
          fout,
-         M,
-         ef,
-         k,
-         le,
-         r,
          minPts,
-         fpeak="",
          cpu=1,
          chroms="",
-         tmp=True,
          cut=0,
-         plot=0,
          loop_filename=""):
     if chroms == "":
         chroms = []
     else:
         chroms = set(chroms.split(","))
-    if os.path.isdir(fout):
-        mes = "Working directory %s exists, return." % fout
-        log.error(mes)
-        return
-    os.mkdir(fout)
 
+    if os.path.isdir(fout):
+        mes = "Working directory %s exists, remove old." % fout
+        log.warning(mes)
+        shutil.rmtree(fout)
+    os.mkdir(fout)
 
     cfs = parseBedpeFiles(fs, fout, chroms, cut, log)
     cfs = Parallel(n_jobs=cpu)(delayed(txt2jd)(f) for f in cfs)
     dataI = {}
     dataS = {}
-    dataI_2, dataS_2, dis_2, dss_2 = getCandidateLoop(cfs, M, ef, k, le, r, minPts, fpeak, cut, cpu, loop_filename)
+    dataI_2, dataS_2, dis_2, dss_2 = getCandidateLoop(cfs, loop_filename)
     if len(dataI_2) == 0:
-        log.info("ERROR: no inter-ligation PETs")
+        log.error("No inter-ligation PETs found.")
         return
     cuts = [cut, ]
     if len(dis_2) == 0 or len(dss_2) == 0:
         dataI = combineCluster(dataI, dataI_2)
     else:
         cut_2, frags = estimateInterAndSelfCutFrag_2(np.array(dis_2), np.array(dss_2))
-        if plot:
-            plotInterSelfCutFrag(dis_2, dss_2, cut_2, frags, prefix=fout + "disCutoff")
         log.info("Estimated inter-ligation and self-ligation distance cutoff")
         # experimental
         cuts.append(cut_2)
         cut = cut_2
-        dataI = combineCluster(dataI, dataS_2)
+        dataI = combineCluster(dataI, dataI_2)
 
     cuts = [c for c in cuts if c > 0]
     cuts.append(0)
     cut = np.min(cuts)
 
     # dataI = filterCluster(dataI, cut)
-    # 5.estimate the significance
-    # TODO
+    # estimate the significance
     e = callpvalue(dataI, minPts, 0, cpu, fout)
-    if e and (tmp == False):
-        shutil.rmtree(fout)
-        return
-    # 7.remove temple files
-    if tmp == False:
-        shutil.rmtree(fout)
+    shutil.rmtree(fout)
 
-def startCalPvalue(loop_filename):
-    stTime = time()
-    print("Start at:", stTime, ".")
+def startCalPvalue():
     global log
-    fileName = os.path.join(os.getcwd(), "LoopCaller_test_inter-ligation.log")
-    log = getLogger(fileName)
-    op = getHelp()
-    report = "Command line: test_I.py -f {} -o {} -M {} -ef {} -k {} -le {} " \
-             "-r {} -minPts {} -p {} -cpu {} -c {} -s {} -cut {} -plot {}".format(
-        op.fnIn, op.fnOut, op.M, op.ef, op.k, op.le,
-        op.resolution, op.minPts, op.fnPeak, op.cpu, op.chroms, op.tmp, op.cut, op.plot)
+    log_file = os.path.join(os.getcwd(), "LoopCaller.log")
+    log = getLogger(log_file)
+    op = getEstimatingArg()
+    st_time = time.time()
+    log.info("LoopCaller start estimating inter-ligation loops from " + op.test_file + " at: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(float(st_time)))))
+    report = "Command line: test_I.py -f {} -o {} -minPts {} -cpu {} -chr {} -cut {} -tf {}".format(
+        op.in_valid_bedpe, op.out_prefix, op.minPts, op.cpu, op.chromes, op.distance_cut, op.test_file)
     log.info(report)
-    pipe(op.fnIn.split(","), op.fnOut, op.M, op.ef, op.k, op.le,
-         op.resolution, op.minPts, op.fnPeak, op.cpu, op.chroms, op.tmp, op.cut, op.plot, loop_filename)
-    endTime = time()
-    log.info("LoopCaller test inter-ligation finished.\nUsed %s CPU time.\n" % (endTime-stTime))
+    pipe(op.in_valid_bedpe.split(","), op.out_prefix, int(op.minPts), int(op.cpu), op.chromes, int(op.distance_cut), op.test_file)
+    en_time = time.time()
+    log.info("LoopCaller estimating inter-ligation loops finished at: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(float(en_time)))))
+    log.info("LoopCaller estimating inter-ligation loops total used %s real cpu time." % (int(en_time - st_time)))
 
-
+startCalPvalue()

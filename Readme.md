@@ -1,54 +1,47 @@
 ## LoopCaller
 
-
+---
 ### Install
-If you are familar with conda, LoopCaller could be installed very easily with following after clone this project.
+LoopCaller can only run on UNIX or Mac operating systems.
+
+If you are familiar with conda, you can run these commands to start LoopCaller by creating a new conda environment:
 ```
-git clone https://github.com/CSUBioGroup/LoopCaller
+conda create -n LoopCaller python=3.7
+conda activate LoopCaller
+conda install matplotlib=3.5.3
+conda install seaborn=0.12.0
+conda install joblib=1.1.1
+conda install hnswlib=0.6.2
+conda install scipy=1.7.3
+```
+Or any other environment that meet the following python package version requirements is ok.
+```
+matplotlib >= 3.5.3
+seaborn >= 0.12.0
+joblib >= 1.1.1
+hnswlib >= 0.6.2
+scipy >= 1.7.3
 ```
 
-Before you install a new environment, please make sure your `~/.condarc` file contains the following channels or their mirror
-links:
-```
-channels:
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
-  - conda-forge
-  - bioconda
-  - defaults
-```
-Then, you can cd in LoopCaller, import `LoopCaller_env.yaml` to create a new environment.
-```
-cd LoopCaller/
-conda env create -n LoopCaller -f LoopCaller_env.yaml
-```
 ---
 ### Usage
 
 #### LoopCaller pipeline
-
 All the running steps of LoopCaller are written in `run_LoopCaller.sh`.
-The following parameters are required:
+
+The mandatory parameters of the `run_LoopCaller.sh` are as follows:
 ```
--prefix         The name of outdir and the prefix of output files.
-
--validBedpe     Processed valid pairs in '.bedpe' format.
-
--M              The number of adjacencies established by each PET point at most in HNSW. Default is 32.
-
--k              Query for k closest points for each PET point in HNSW. Default is 4.
-
--minPts         The minimum count of PET points per cluster required after clustering. Default is 4.
-
--le             The clustering model of Leiden algorithm. Use 'ModularityVertexPartition' model by 0, 
-                or 'CPMVertexPartition' model by 1. Default is 0.
-
--cpu            The number of cpu cores used. Default is 16.
-
--target         The candidate loops genarated by peak-based tools.(in '.bedpe' format)
-
--mergeDis       A list of anchor distances between two candidate loops, used to determine whether to merge.
-                Default is '(-10000 0 10000 100000)'. (Negative distance indicate the required length of overlap) 
+-out_prefix         The prefix of the output file name.
+-in_valid_bedpe     Processed valid pairs in '.bedpe' or '.bedpe.gz' format, multiple files use ',' split.
+-cpu                The number of CPU used to run the job, default is 1, set -1 to use all cpus available. (set as the number of chomes is recommanded)
+-M                  The maximum number of adjacency edges will be established for each point in building HNSW network stage. Default is 32.
+-k                  Query k approximate nearest neighbors for each point in HNSW query stage. Default is 4.
+-ef                 The maximum length of the array of cached nearest neighbor relationships in HNSW query stage. Default is 500.
+-bs                 The maximum steps from each start point to construct base graph before clustering.
+-minPts             The minimum count of PET points per cluster required after clustering. Default is 4.
+-target             The candidate loops genarated by peak-based tools.(in '.bedpe' format)
+-mergeDis           A list of anchor distances between two candidate loops, used to determine whether to merge.
+                    Default is '(-10000 0 10000 100000)'. (Negative distance indicate the required length of overlap)
 ```
 
 #### Evaluation of candidate loops

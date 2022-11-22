@@ -1,23 +1,24 @@
 #!/bin/bash
 
 #------ The mandatory parameters of LoopCaller ------
+in_dir=example_workspace
 
-in_valid_bedpe=example_valid.bedpe 	# Processed valid pairs in '.bedpe' format.
-out_prefix=example			            # The prefix of the output file name.
-cpu=4 					                    # The number of CPU used to run the job, default is 1, set -1 to use all cpus available. Too many CPUs may cause memory error.
+in_valid_bedpe=${in_dir}/example_valid.bedpe # Processed valid pairs in '.bedpe' format.
+out_prefix=example 		# The prefix of the output file name.
+cpu=4 			# The number of CPU used to run the job, default is 1, set -1 to use all cpus available. Too many CPUs may cause memory error.
 
 # HNSW parameters
-M=32					# The maximum number of adjacency edges will be established for each point in building HNSW network stage. Default is 32.
-k=4           # Query k approximate nearest neighbors for each point in HNSW query stage. Default is 4.
-ef=500			  # The maximum length of the array of cached nearest neighbor relationships in HNSW query stage. Default is 500.
+M=32 			# The maximum number of adjacency edges will be established for each point in building HNSW network stage. Default is 32.
+k=4 			# Query k approximate nearest neighbors for each point in HNSW query stage. Default is 4.
+ef=500 			# The maximum length of the array of cached nearest neighbor relationships in HNSW query stage. Default is 500.
 
 # Cluster parameters
-bs=3					# The maximum steps from each start point to construct base graph before clustering. Default is 3.
-minPts=4			# The minimum count of PET points per cluster required after clustering. Default is 4.
+bs=3 			# The maximum steps from each start point to construct base graph before clustering. Default is 3.
+minPts=4 			# The minimum count of PET points per cluster required after clustering. Default is 4.
 
 
 #---------------- Start LoopCaller ----------------
-run_steps=(1 2 3 4)
+run_steps=(1 2) 	# Default used steps 1 and 2. You can also add step 3 and 4 to compress loops and estimate significance.
 
 results_dir=${out_prefix}_LoopCaller_results
 if [ ! -d ${results_dir} ];then
@@ -39,10 +40,10 @@ if [[ "${run_steps[*]}" =~ "2" ]];then
 fi
 
 ## Step 3 : Compress loops
-dis_arr=(-100000 0 100000 1000000)            	# A list of required anchor distances between the two loops to be compressed.
-                                             	# Default is '(-100000 0 100000 1000000)'. (Negative distance indicate the required length of overlap)
+dis_arr=(-100000 0 100000 1000000)  # A list of required anchor distances between the two loops to be compressed.
+                                    # Default is '(-100000 0 100000 1000000)'. (Negative distance indicate the required length of overlap)
 if [[ "${run_steps[*]}" =~ "3" ]];then
-  compress_pets=example_compress_pets.bedpe      # The PETs used to compress loops
+  compress_pets=${in_dir}/example_compress_pets.bedpe      # The PETs used to compress loops
 
   if [ ! -e "./scripts/bedpe_compress" ];then
     cd scripts
@@ -75,8 +76,8 @@ if [[ "${run_steps[*]}" =~ "4" ]];then
 
   for dis in ${dis_arr[*]}
   do
-    python ./src/test_I.py -f ./${in_valid_bedpe} -o ${out_prefix} -minPts ${minPts} -cpu ${cpu} -tf ./${results_dir}/${out_prefix}_dis_${dis}.bedpe
-    python ./src/test_S.py -f ./${in_valid_bedpe} -o ${out_prefix} -minPts ${minPts} -cpu ${cpu} -tf ./${results_dir}/${out_prefix}_dis_${dis}.bedpe
+    python ./src/test_I.py -f ./${in_valid_bedpe} -o ${out_prefix} -cpu ${cpu} -tf ./${results_dir}/${out_prefix}_dis_${dis}.bedpe
+    python ./src/test_S.py -f ./${in_valid_bedpe} -o ${out_prefix} -cpu ${cpu} -tf ./${results_dir}/${out_prefix}_dis_${dis}.bedpe
     ./scripts/compress_I_S ${out_prefix}_intra_ligation.loop ${out_prefix}_self_ligation.loop > ${results_dir}/${out_prefix}_dis_${dis}.loop
     rm ./*_ligation.loop
   done

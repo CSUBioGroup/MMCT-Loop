@@ -55,7 +55,7 @@ Initially, we have configured the `run_MMCT-Loop.sh` file to provide loop predic
 -dis_arr            A list of required anchor distances between the two candidate loops to be compressed.
                     Default is '(-100000 0 100000 1000000)'. (Negative distance indicate the required length of overlap)
 
--compress_pets      The file name of PETs used to compress candidate loops.
+-merge_pets         The file name of PETs used to merge candidate loops.
 ```
 
 #### Evaluation of candidate loops

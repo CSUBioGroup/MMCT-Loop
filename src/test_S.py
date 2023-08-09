@@ -221,17 +221,17 @@ def pipe(fs,
 
 def startCalPvalue():
     global log
-    log_file = os.path.join(os.getcwd(), "LoopCaller.log")
+    log_file = os.path.join(os.getcwd(), "MMCT_Loop.log")
     log = getLogger(log_file)
     op = getEstimatingArg()
     st_time = time.time()
-    log.info("LoopCaller start estimating inter-ligation loops from " + op.test_file + " at: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(float(st_time)))))
+    log.info("MMCT_Loop start estimating inter-ligation loops from " + op.test_file + " at: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(float(st_time)))))
     report = "Command line: test_S.py -f {} -o {} -cpu {} -chr {} -cut {} -tf {}".format(
         op.in_valid_bedpe, op.out_prefix, op.cpu, op.chromes, op.distance_cut, op.test_file)
     log.info(report)
     pipe(op.in_valid_bedpe.split(","), op.out_prefix, int(op.cpu), op.chromes, int(op.distance_cut), op.test_file)
     en_time = time.time()
-    log.info("LoopCaller estimating self-ligation loops finished at: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(float(en_time)))))
-    log.info("LoopCaller estimating self-ligation loops total used %s real cpu time." % (int(en_time - st_time)))
+    log.info("MMCT_Loop estimating self-ligation loops finished at: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(float(en_time)))))
+    log.info("MMCT_Loop estimating self-ligation loops total used %s real cpu time." % (int(en_time - st_time)))
 
 startCalPvalue()

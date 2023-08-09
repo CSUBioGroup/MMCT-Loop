@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#------ The mandatory parameters of LoopCaller ------
+#------ The mandatory parameters of MMCT-Loop ------
 in_dir=example_workspace
 
 in_valid_bedpe=${in_dir}/example_valid.bedpe # Processed valid pairs in '.bedpe' format.
@@ -17,17 +17,17 @@ bs=3 			# The maximum steps from each start point to construct base graph before
 minPts=4 			# The minimum count of PET points per cluster required after clustering. Default is 4.
 
 
-#---------------- Start LoopCaller ----------------
-run_steps=(1 2) 	# Default used steps 1 and 2. You can also add step 3 and 4 to compress loops and estimate significance.
+#---------------- Start MMCT-Loop ----------------
+run_steps=(1 2) 	# Default used steps 1 and 2. You can also add step 3 and 4 to merge loops and estimate significance.
 
-results_dir=${out_prefix}_LoopCaller_results
+results_dir=${out_prefix}_MMCT-Loop_results
 if [ ! -d ${results_dir} ];then
   mkdir ${results_dir}
 fi
 
 ## Step 1 : Call loops
 if [[ "${run_steps[*]}" =~ "1" ]];then
-  python ./src/LoopCaller.py -f ${in_valid_bedpe} -o ${out_prefix} -cpu ${cpu} -M ${M} -k ${k} -ef ${ef} -bs ${bs} -minPts ${minPts}
+  python ./src/MMCT-Loop.py -f ${in_valid_bedpe} -o ${out_prefix} -cpu ${cpu} -M ${M} -k ${k} -ef ${ef} -bs ${bs} -minPts ${minPts}
   mv ${out_prefix}.loop ${results_dir}/${out_prefix}.loop
 fi
 
@@ -35,42 +35,44 @@ fi
 if [[ "${run_steps[*]}" =~ "2" ]];then
   loop_format_bedpe=${out_prefix}.bedpe
   if [ -f ${results_dir}/${out_prefix}.loop ];then
-    python ./scripts/loopFormat.py ${results_dir}/${out_prefix}.loop > ${results_dir}/${loop_format_bedpe}
+    python ./scripts/loopFormat.py -b ${results_dir}/${out_prefix}.loop > ${results_dir}/${loop_format_bedpe}
+    python ./scripts/loopFormat.py -l ${results_dir}/${out_prefix}.loop > ${results_dir}/${out_prefix}.loop2
+    mv ${results_dir}/${out_prefix}.loop2 ${results_dir}/${out_prefix}.loop
   fi
 fi
 
-## Step 3 : Compress loops
-dis_arr=(-100000 0 100000 1000000)  # A list of required anchor distances between the two loops to be compressed.
+## Step 3 : Loops merge
+dis_arr=(-100000 0 100000 1000000)  # A list of required anchor distances between the two loops to be merged.
                                     # Default is '(-100000 0 100000 1000000)'. (Negative distance indicate the required length of overlap)
 if [[ "${run_steps[*]}" =~ "3" ]];then
-  compress_pets=${in_dir}/example_compress_pets.bedpe      # The PETs used to compress loops
+  merge_pets=${in_dir}/example_merge_pets.bedpe      # The PETs used to merge loops
 
-  if [ ! -e "./scripts/bedpe_compress" ];then
+  if [ ! -e "./scripts/bedpe_merge" ];then
     cd scripts
-    g++ -std=c++11 bedpe_compress.cpp -o bedpe_compress
+    g++ -std=c++11 bedpe_merge.cpp -o bedpe_merge
     cd ..
   fi
 
   loop_format_bedpe=./${results_dir}/${out_prefix}.bedpe
-  if [ -f ${compress_pets} ] && [ -f ${loop_format_bedpe} ];then
+  if [ -f ${merge_pets} ] && [ -f ${loop_format_bedpe} ];then
     if [ ! -d ${results_dir} ];then
       mkdir ${results_dir}
     fi
-    cat ${compress_pets} > pets_set.bedpe
+    cat ${merge_pets} > pets_set.bedpe
     cat ${loop_format_bedpe} >> pets_set.bedpe
     for dis in ${dis_arr[*]}
     do
-      ./scripts/bedpe_compress pets_set.bedpe -d ${dis} > ./${results_dir}/${out_prefix}_dis_${dis}.bedpe
+      ./scripts/bedpe_merge pets_set.bedpe -d ${dis} > ./${results_dir}/${out_prefix}_dis_${dis}.bedpe
     done
     rm pets_set.bedpe
   fi
 fi
 
-## Step 4 : Estimate significance of compressed loops
+## Step 4 : Estimate significance of merged loops
 if [[ "${run_steps[*]}" =~ "4" ]];then
-  if [ ! -e "./scripts/compress_I_S" ]; then
+  if [ ! -e "./scripts/merge_I_S" ]; then
    cd scripts
-   g++ -std=c++11 compress_I_S.cpp -o compress_I_S
+   g++ -std=c++11 merge_I_S.cpp -o merge_I_S
    cd ..
   fi
 
@@ -78,7 +80,7 @@ if [[ "${run_steps[*]}" =~ "4" ]];then
   do
     python ./src/test_I.py -f ./${in_valid_bedpe} -o ${out_prefix} -cpu ${cpu} -tf ./${results_dir}/${out_prefix}_dis_${dis}.bedpe
     python ./src/test_S.py -f ./${in_valid_bedpe} -o ${out_prefix} -cpu ${cpu} -tf ./${results_dir}/${out_prefix}_dis_${dis}.bedpe
-    ./scripts/compress_I_S ${out_prefix}_intra_ligation.loop ${out_prefix}_self_ligation.loop > ${results_dir}/${out_prefix}_dis_${dis}.loop
+    ./scripts/merge_I_S ${out_prefix}_intra_ligation.loop ${out_prefix}_self_ligation.loop > ${results_dir}/${out_prefix}_dis_${dis}.loop
     rm ./*_ligation.loop
   done
   cd ..

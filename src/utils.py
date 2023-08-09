@@ -122,7 +122,7 @@ def getHelp():
 
 def getEstimatingArg():
     description = """
-            Description: LoopCaller estimating inter-ligation loops.
+            Description: MMCT_Loop estimating inter-ligation loops.
             """
     parser = argparse.ArgumentParser(description=description, epilog=EPILOG)
     parser.add_argument(

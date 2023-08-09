@@ -175,17 +175,17 @@ def pipe(fs,
         log.error(mes)
         return
     os.mkdir(fout)
-    LoopCaller_cluster_start_time = time.time()
-    log.info("LoopCaller start clustering.")
+    MMCT_Loop_cluster_start_time = time.time()
+    log.info("MMCT_Loop start clustering.")
     cfs = parseBedpeFiles(fs, fout, chroms, cut, log)
     cfs = Parallel(n_jobs=cpu)(delayed(txt2jd)(f) for f in cfs)
     dataI = {}
     dataI_2, dataS_2, dis_2, dss_2 = runHNSW(cfs, M, ef, k, bs, cut, cpu)
     if len(dataI_2) == 0:
         log.error("no inter-ligation PETs found")
-        LoopCaller_cluster_end_time = time.time()
-        log.info("LoopCaller cluster finished.")
-        log.info("LoopCaller clustering used %s real cpu time." % (int(LoopCaller_cluster_end_time - LoopCaller_cluster_start_time)))
+        MMCT_Loop_cluster_end_time = time.time()
+        log.info("MMCT_Loop cluster finished.")
+        log.info("MMCT_Loop clustering used %s real cpu time." % (int(MMCT_Loop_cluster_end_time - MMCT_Loop_cluster_start_time)))
         return
     cuts = [cut, ]
 
@@ -205,17 +205,17 @@ def pipe(fs,
     cut = np.min(cuts)
 
     dataI = filterCluster(dataI, cut)
-    LoopCaller_cluster_end_time = time.time()
-    log.info("LoopCaller cluster finished.")
-    log.info("LoopCaller clustering used %s real time." % (int(LoopCaller_cluster_end_time - LoopCaller_cluster_start_time)))
+    MMCT_Loop_cluster_end_time = time.time()
+    log.info("MMCT_Loop cluster finished.")
+    log.info("MMCT_Loop clustering used %s real time." % (int(MMCT_Loop_cluster_end_time - MMCT_Loop_cluster_start_time)))
 
     # estimate the significance
-    LoopCaller_estimate_start_time = time.time()
-    log.info("LoopCaller start estimating loop significance .")
+    MMCT_Loop_estimate_start_time = time.time()
+    log.info("MMCT_Loop start estimating loop significance .")
     e = callpvalue(dataI, minPts, 0, cpu, fout)
-    LoopCaller_estimate_end_time = time.time()
-    log.info("LoopCaller estimate loop significance finished.")
-    log.info("LoopCaller estimating loop significance used %s real cpu time." % (int(LoopCaller_estimate_end_time - LoopCaller_estimate_start_time)))
+    MMCT_Loop_estimate_end_time = time.time()
+    log.info("MMCT_Loop estimate loop significance finished.")
+    log.info("MMCT_Loop estimating loop significance used %s real cpu time." % (int(MMCT_Loop_estimate_end_time - MMCT_Loop_estimate_start_time)))
 
     if e and (tmp == False):
         shutil.rmtree(fout)
@@ -227,20 +227,20 @@ def pipe(fs,
 def main():
     stTime = time.time()
     global log
-    log_file = os.path.join(os.getcwd(), "LoopCaller.log")
+    log_file = os.path.join(os.getcwd(), "MMCT_Loop.log")
     log = getLogger(log_file)
-    log.info("LoopCaller start at: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(float(stTime)))) + ".")
+    log.info("MMCT_Loop start at: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(float(stTime)))) + ".")
     op = getHelp()
-    report = "Command line:python LoopCaller.py -f {} -o {} -M {} -ef {} -k {} " \
+    report = "Command line:python MMCT-Loop.py -f {} -o {} -M {} -ef {} -k {} " \
              "-bs {} -minPts {} -cpu {} -chr {} -s {} -cut {} -plot {}".format(
         op.in_valid_bedpe, op.out_prefix, op.hnsw_M, op.hnsw_ef, op.hnsw_k, op.base_step, op.minPts, op.cpu, op.chromes, op.save, op.distance_cut, op.plot_dis)
     log.info(report)
     pipe(op.in_valid_bedpe.split(","), op.out_prefix, int(op.hnsw_M), int(op.hnsw_ef), int(op.hnsw_k),
          int(op.base_step), int(op.minPts), int(op.cpu), op.chromes, op.save, op.distance_cut, op.plot_dis)
     endTime = time.time()
-    log.info("LoopCaller all steps finished.")
-    log.info("LoopCaller total used %s real cpu time." % (int(endTime - stTime)))
-    log.info("LoopCaller finished at: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(float(endTime)))) + ".")
+    log.info("MMCT_Loop all steps finished.")
+    log.info("MMCT_Loop total used %s real cpu time." % (int(endTime - stTime)))
+    log.info("MMCT_Loop finished at: " + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(float(endTime)))) + ".")
     
 if __name__ == '__main__':
     main()

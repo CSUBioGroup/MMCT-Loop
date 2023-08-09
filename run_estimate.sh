@@ -12,10 +12,11 @@ cpu=16
 python ./src/test_I.py -f ./${in_valid_bedpe} -o ${out_prefix} -cpu ${cpu} -tf ${candidate_loops_bedpe}
 python ./src/test_S.py -f ./${in_valid_bedpe} -o ${out_prefix} -cpu ${cpu} -tf ${candidate_loops_bedpe}
 
-if [ ! -e "./scripts/compress_I_S" ]; then
+if [ ! -e "./scripts/merge_I_S" ]; then
    cd scripts
-   g++ -std=c++11 compress_I_S.cpp -o compress_I_S
+   g++ -std=c++11 merge_I_S.cpp -o merge_I_S
    cd ..
 fi
-./scripts/compress_I_S ${out_prefix}_intra_ligation.loop ${out_prefix}_self_ligation.loop > ${out_prefix}.loop
+
+./scripts/merge_I_S ${out_prefix}_intra_ligation.loop ${out_prefix}_self_ligation.loop > ${out_prefix}.loop
 rm ./*_ligation.loop

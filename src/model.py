@@ -80,7 +80,7 @@ def getNearbyPairRegions(iva, ivb, win=5):
 
 def getMultiplePsFdr1(iva, ivb, model, win=5):
     """
-    LoopCallerFDR
+    MMCT_Loop FDR
     for the interval a and b, searching its nearby windows to estimate FDR and p-values.
     return ra, rb, rab, es,es_ra, es_rb, fdr, pop
     """
